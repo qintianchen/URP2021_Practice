@@ -1,6 +1,6 @@
 using UnityEngine.Rendering.Universal;
 
-public class GlobalFogRenderFeature : ScriptableRendererFeature
+public class GlobalFogRendererFeature : ScriptableRendererFeature
 {
     GlobalFogPass m_GlobalFogPass;
 

@@ -24,7 +24,7 @@ MonoBehaviour:
     m_Value: 346.1
   fogColor:
     m_OverrideState: 1
-    m_Value: {r: 0.31132078, g: 0.27160296, b: 0.14538093, a: 1}
+    m_Value: {r: 0.26877892, g: 0.3773585, b: 0.37123644, a: 1}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -3,6 +3,7 @@ Library
 Logs
 Temp
 UserSettings
+Build
 obj
 **/*.csproj
 **/*.sln
