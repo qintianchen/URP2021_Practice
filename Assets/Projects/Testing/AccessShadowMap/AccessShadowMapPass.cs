@@ -30,10 +30,10 @@ public class AccessShadowMapPass : ScriptableRenderPass
         
         cmd.Blit(_AccessShadowTempRTId, source, material);
 
-        cmd.ReleaseTemporaryRT(_AccessShadowTempRTId);
-        
         context.ExecuteCommandBuffer(cmd);
         context.Submit();
+        
+        cmd.ReleaseTemporaryRT(_AccessShadowTempRTId);
         CommandBufferPool.Release(cmd);
     }
 

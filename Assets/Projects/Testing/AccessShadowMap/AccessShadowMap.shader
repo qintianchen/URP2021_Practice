@@ -15,16 +15,13 @@ Shader "Custom/Testing/AccessShadowMap"
         Pass
         {
             HLSLPROGRAM
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
-            #pragma multi_compile _ MAIN_LIGHT_CALCULATE_SHADOWS
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS             // 重要
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE     // 重要
 
             #pragma vertex Vert
             #pragma fragment Frag
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            // #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
-            // #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             struct Attributes
@@ -62,9 +59,9 @@ Shader "Custom/Testing/AccessShadowMap"
                 float4 positionCS = NDC * depthVS;
                 float4 positionWS = mul(UNITY_MATRIX_I_VP, positionCS);
 
-                float4 shadowCoord = TransformWorldToShadowCoord(positionWS);
-                half shadow = MainLightRealtimeShadow(shadowCoord);
-                
+                float4 shadowCoord = TransformWorldToShadowCoord(positionWS);   // 重要
+                half shadow = MainLightRealtimeShadow(shadowCoord);             // 重要
+
                 return shadow;
             }
             ENDHLSL
