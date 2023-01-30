@@ -1,10 +1,11 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 [ExecuteAlways]
 public class AutoChangeRenderPipeline : MonoBehaviour
 {
-    public RenderPipelineAsset renderPipelineAsset;
+    public UniversalRenderPipelineAsset renderPipelineAsset;
     
     private void OnValidate()
     {
