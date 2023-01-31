@@ -4,8 +4,5 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes:
-  - enabled: 1
-    path: Assets/Projects/Testing/SRPBatch/SRPBatch.unity
-    guid: d97f34d1fddcb194a9b15213c0d898b6
+  m_Scenes: []
   m_configObjects: {}
