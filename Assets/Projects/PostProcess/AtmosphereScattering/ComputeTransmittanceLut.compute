@@ -1,0 +1,21 @@
+#pragma kernel CSMain
+
+#include "AtmosphereScatteringUtils.hlsl"
+
+RWTexture2D<float4> Result;
+
+[numthreads(8,8,1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    AtmosphereParams params = _AtmosphereParams;
+
+    float width;
+    float height;
+    Result.GetDimensions(width, height);
+    float2 uv = id.xy / float2(width, height);
+
+    float height = sqrt(uv.x * uv.x + params.planetRadius * params.planetRadius) - params.planetRadius; // todo: 海拔高度
+    float cos_theta = uv.v * 2 - 1; // todo: [-1, 1] 即对应 [0, PI]
+    
+    Result[id.xy] = GetTransmittance(params, height, cos_theta);
+}
