@@ -1,17 +1,24 @@
+using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
 public class AtmosphereScatteringRendererFeature : ScriptableRendererFeature
 {
-    private AtmosphereScatteringPass m_AtmosphereScatteringPass;
-    
+    public AtmosphereRenderSettings atmosphereRenderSettings;
+    public ComputeShader            shaderForTransmittanceLut;
+    public RenderTexture            transmittanceLut;
+
+    private BeforeRenderSkyboxPass m_BeforeRenderSkyboxPass;
+
     public override void Create()
     {
-        m_AtmosphereScatteringPass = new();
-        m_AtmosphereScatteringPass.renderPassEvent = RenderPassEvent.BeforeRenderingSkybox;
+        m_BeforeRenderSkyboxPass = new();
+        m_BeforeRenderSkyboxPass.renderPassEvent = RenderPassEvent.BeforeRenderingSkybox;
+        
+        m_BeforeRenderSkyboxPass.Setup(atmosphereRenderSettings, shaderForTransmittanceLut, transmittanceLut);
     }
 
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {
-        renderer.EnqueuePass(m_AtmosphereScatteringPass);
+        renderer.EnqueuePass(m_BeforeRenderSkyboxPass);
     }
 }

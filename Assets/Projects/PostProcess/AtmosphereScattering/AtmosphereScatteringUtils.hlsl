@@ -118,14 +118,14 @@ float TriangleCosineLaw(float a, float b, float cos_theta)
 {
     float a2 = a * a;
     float b2 = b * b;
-    return a2 + b2 - 2 * a * b * cos_theta;
+    return sqrt(a2 + b2 - 2 * a * b * cos_theta);
 }
 
 float3 GetTransmittance(AtmosphereParams params, float height, float cos_theta)
 {
     float sin_theta = sqrt(1 - cos_theta * cos_theta);
     float3 viewDirWS = float3(sin_theta, cos_theta, 0);
-    float3 viewPositionWS = float3(0, params.planetRadius + height, 0);
+    float3 viewPositionWS = float3(0, height, 0);
 
     float sampleCount = 32;
     float distance1;
@@ -141,6 +141,14 @@ float3 GetTransmittance(AtmosphereParams params, float height, float cos_theta)
     }
 
     return exp(-transmittanceSigma * stepLength);
+}
+
+float GetTransmittanceFromLut(AtmosphereParams params, float height, float cos_theta, sampler2D transmittanceLut)
+{
+    float r = params.planetRadius * params.planetRadius;
+    float u = (cos_theta + 1) * 0.5;
+    float v = sqrt((height + r) * (height + r) - r * r);
+    return tex2D(transmittanceLut, float2(u, v));
 }
 
 #endif
