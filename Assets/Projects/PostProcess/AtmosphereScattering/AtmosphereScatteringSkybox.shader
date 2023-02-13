@@ -87,46 +87,52 @@ Shader "Custom/PostProcessing/AtmosphereScatteringSkybox"
             {
                 float2 screenQuadUV = input.positionNDC.xy * 0.5 + 0.5; // [0, 1]
                 float3 viewDirWS = ScreenQuadUVtoViewDirWS(screenQuadUV, _FOV, _Aspect);
-
                 viewDirWS = normalize(viewDirWS);
 
-                float3 viewPositionWS = float3(0, 0, 0);
+                float3 viewPositionWS = float3(0, 10, 0);
 
                 AtmosphereParams atmosphereParams = _AtmosphereParamses[0];
                 Light mainLight = GetMainLight();
+                float3 mainLightDirection = normalize(mainLight.direction);
 
                 float distance1;
                 float tempFloat;
-                GetIntersectPointsWithSphere(viewPositionWS, viewDirWS, float3(0, -atmosphereParams.planetRadius, 0), atmosphereParams.planetRadius, distance1, tempFloat);
+                GetIntersectPointsWithSphere(viewPositionWS, viewDirWS, float3(0, -atmosphereParams.planetRadius, 0), atmosphereParams.planetRadius + atmosphereParams.atmosphereHeight, distance1, tempFloat);
 
                 float sampleCount = 32;
                 float stepLength = distance1 / sampleCount;
 
                 float viewDotUp = dot(viewDirWS, float3(0, 1, 0));
+                float viewDotLight = dot(viewDirWS, mainLightDirection);
 
-                float totalAttenuationFromScattering = 0;
+                float3 finalColor = 0;
                 for (int i = 0; i < sampleCount; i++)
                 {
                     float curDistance = stepLength * (i + 0.5);
 
-                    float height = TriangleCosineLaw(curDistance, atmosphereParams.planetRadius, -viewDotUp) - atmosphereParams.planetRadius; // 海拔高度
-                    float cos_theta = dot(mainLight.direction, float3(0, 1, 0));
-                    float t1 = GetTransmittanceFromLut(atmosphereParams, height, cos_theta, _TransmittanceLut);
+                    float height = length(float3(0, atmosphereParams.planetRadius, 0) + curDistance * viewDirWS) - atmosphereParams.planetRadius; // 海拔高度
+                    float3 centerToCurPoint = float3(0, atmosphereParams.planetRadius, 0) + viewDirWS * curDistance; // 从地心指向当前考察点的向量
+                    float3 centerToCurPoint_normalized = normalize(centerToCurPoint);
+                    float cos_theta1 = dot(mainLightDirection, centerToCurPoint_normalized);
+                    float3 t1 = GetTransmittanceFromLut(atmosphereParams, height, cos_theta1, _TransmittanceLut);
+                    
+                    float3 t20 = GetTransmittanceFromLut(atmosphereParams, 10, viewDotUp, _TransmittanceLut);
+                    float3 t21 = GetTransmittanceFromLut(atmosphereParams, height, dot(viewDirWS, centerToCurPoint_normalized), _TransmittanceLut);
+                    float3 t2 = t20 / t21;
 
-                    float cos_theta2 = dot(viewDirWS, float3(0, 1, 0));
-                    float t20 = GetTransmittanceFromLut(atmosphereParams, 0, cos_theta2, _TransmittanceLut);
-                    float t21 = GetTransmittanceFromLut(atmosphereParams, height, cos_theta2, _TransmittanceLut);
-                    float t2 = t20 / t21;
+                    float3 s = GetRayleighScattering(atmosphereParams, viewDotLight, height) + GetMieScattering(atmosphereParams, viewDotLight, height);
 
-                    float cos_theta3 = dot(viewDirWS, mainLight.direction);
-                    float s = GetRayleighScattering(atmosphereParams, cos_theta3, height) + GetMieScattering(atmosphereParams, cos_theta3, height);
-
-                    totalAttenuationFromScattering += s; // * t1 * t2;
+                    finalColor += mainLight.color * 0.03 * t1 * t2; // * (s * stepLength);
+                    // totalAttenuationFromScattering += s * t1 * t2;
                 }
 
-                // return half4(viewDirWS, 1);
-                return Test(viewDirWS);
-                return half4(mainLight.color * 2 * totalAttenuationFromScattering, 1);
+                if(viewDotLight > 0.9999f)
+                {
+                    finalColor += 0.5 * viewDotLight;
+                }
+                
+                finalColor = pow(finalColor, 2.2);
+                return half4(finalColor, 1);
             }
             ENDHLSL
         }

@@ -4,17 +4,23 @@
 
 RWTexture2D<float4> Result;
 
+// 输出 TransmittanceLUT，横坐标对应 [PI, 0] 的天顶角，纵坐标对应 [0, AtmosphereHeight] 的海拔高度
 [numthreads(8,8,1)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-    AtmosphereParams params = _AtmosphereParamses[0]; 
+    AtmosphereParams params = _AtmosphereParamses[0];
 
     float w;
     float h;
     Result.GetDimensions(w, h);
     float2 uv = id.xy / float2(w, h);
 
-    float cos_theta = uv.x * 2 - 1; // [-1, 1] 即对应 [0, PI] 
-    float height = sqrt(uv.y * uv.y + params.planetRadius * params.planetRadius) - params.planetRadius; // 海拔高度
+    float r = params.planetRadius;
+
+    // 最大的切线长度为大气层顶部到星球表面的切线，用这个最大值来做归一化
+    float h1 = params.atmosphereHeight + r;
+    float max2 = h1 * h1 - r * r;
+    float cos_theta = uv.x * 2 - 1; // [-1, 1] 即对应 [PI, 0] 
+    float height = sqrt(uv.y * uv.y * max2 + r * r) - r; //
     Result[id.xy] = float4(GetTransmittance(params, height, cos_theta), 1);
 }

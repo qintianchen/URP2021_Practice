@@ -121,6 +121,13 @@ float TriangleCosineLaw(float a, float b, float cos_theta)
     return sqrt(a2 + b2 - 2 * a * b * cos_theta);
 }
 
+/**
+ * \brief 
+ * \param params 大气层参数
+ * \param height 海拔高度
+ * \param cos_theta 天顶角，为 dot(viewDir, up)
+ * \return 
+ */
 float3 GetTransmittance(AtmosphereParams params, float height, float cos_theta)
 {
     float sin_theta = sqrt(1 - cos_theta * cos_theta);
@@ -131,6 +138,7 @@ float3 GetTransmittance(AtmosphereParams params, float height, float cos_theta)
     float distance1;
     float tempFloat;
     GetIntersectPointsWithSphere(viewPositionWS, viewDirWS, float3(0, -params.planetRadius, 0), params.planetRadius + params.atmosphereHeight, distance1, tempFloat);
+    
     float stepLength = distance1 / sampleCount;
     float3 transmittanceSigma = 0;
     for (int i = 0; i < sampleCount; i++)
@@ -143,12 +151,18 @@ float3 GetTransmittance(AtmosphereParams params, float height, float cos_theta)
     return exp(-transmittanceSigma * stepLength);
 }
 
-float GetTransmittanceFromLut(AtmosphereParams params, float height, float cos_theta, sampler2D transmittanceLut)
+float3 GetTransmittanceFromLut(AtmosphereParams params, float height, float cos_theta, sampler2D transmittanceLut)
 {
-    float r = params.planetRadius * params.planetRadius;
+    float r = params.planetRadius;
+    float r2 = r * r;
+    
     float u = (cos_theta + 1) * 0.5;
-    float v = sqrt((height + r) * (height + r) - r * r);
-    return tex2D(transmittanceLut, float2(u, v));
+
+    float h1 = params.atmosphereHeight + params.planetRadius;
+    float max = sqrt(h1 * h1 + r * r);
+    float v = sqrt((height + r) * (height + r) - r2) / max;
+
+    return tex2D(transmittanceLut, float2(u, v)).xyz;
 }
 
 #endif
