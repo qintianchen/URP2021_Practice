@@ -83,6 +83,9 @@ int GetIntersectPointsWithSphere(float3 fromPosition, float3 ray, float3 sphereP
 
     float rp = tb * tb - 4 * ta * tc;
 
+    distance1 = 0;
+    distance2 = 0;
+
     if (rp < 0)
     {
         return 0;
@@ -155,13 +158,12 @@ float3 GetTransmittanceFromLut(AtmosphereParams params, float height, float cos_
 {
     float r = params.planetRadius;
     float r2 = r * r;
-    
-    float u = (cos_theta + 1) * 0.5;
-
     float h1 = params.atmosphereHeight + params.planetRadius;
-    float max = sqrt(h1 * h1 + r * r);
+    float max2 = h1 * h1 - r * r;
+    float max = sqrt(max2);
+    float minCosTheta = -max / (r + height);
+    float u = (cos_theta - minCosTheta) / (1 - minCosTheta);
     float v = sqrt((height + r) * (height + r) - r2) / max;
-
     return tex2D(transmittanceLut, float2(u, v)).xyz;
 }
 

@@ -96,8 +96,15 @@ Shader "Custom/PostProcessing/AtmosphereScatteringSkybox"
                 Light mainLight = GetMainLight();
                 float3 mainLightDirection = normalize(mainLight.direction);
 
-                float distance1;
                 float tempFloat;
+                float tempFloat2;
+                int countIntersectWithPlanet = GetIntersectPointsWithSphere(viewPositionWS, viewDirWS, float3(0, -atmosphereParams.planetRadius, 0), atmosphereParams.planetRadius, tempFloat, tempFloat2);
+                if(countIntersectWithPlanet > 0)
+                {
+                    return 0;
+                }
+
+                float distance1;
                 GetIntersectPointsWithSphere(viewPositionWS, viewDirWS, float3(0, -atmosphereParams.planetRadius, 0), atmosphereParams.planetRadius + atmosphereParams.atmosphereHeight, distance1, tempFloat);
 
                 float sampleCount = 32;
@@ -123,7 +130,7 @@ Shader "Custom/PostProcessing/AtmosphereScatteringSkybox"
 
                     float3 s = GetRayleighScattering(atmosphereParams, viewDotLight, height) + GetMieScattering(atmosphereParams, viewDotLight, height);
 
-                    finalColor += mainLight.color * 10 * t1 * t2 * (s * stepLength);
+                    finalColor += mainLight.color * 32 * t1 * t2 * (s * stepLength);
                 }
 
                 if(viewDotLight > 0.9999f)

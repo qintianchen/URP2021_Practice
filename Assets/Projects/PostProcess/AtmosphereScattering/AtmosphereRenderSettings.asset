@@ -25,7 +25,7 @@ MonoBehaviour:
     ozoneAbsorption: {x: 0, y: 0, z: 0}
     ozoneCenter: 25000
     ozoneWidth: 15000
-  rayleighScatteringScale: 2.75
-  mieScatteringScale: 1.59
+  rayleighScatteringScale: 1
+  mieScatteringScale: 1
   mieAbsorptionScale: 1
   ozoneAbsorptionScale: 1
