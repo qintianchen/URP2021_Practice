@@ -24,6 +24,17 @@ public class BeforeRenderSkyboxPass : ScriptableRenderPass
         this.transmittanceLut = transmittanceLut;
     }
 
+    public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
+    {
+        var kernelId = shaderForTransmittanceLut.FindKernel("CSMain");
+        var rtWidth  = transmittanceLut.width;
+        var rtHeight = transmittanceLut.height;
+        cmd.GetTemporaryRT(_TransmittanceLutTempRTId, rtWidth, rtHeight, 0, filter: FilterMode.Bilinear, format: RenderTextureFormat.ARGBFloat, readWrite: default, antiAliasing: 1, enableRandomWrite: true);
+        cmd.SetComputeTextureParam(shaderForTransmittanceLut, kernelId, "Result", _TransmittanceLutTempRTId);
+
+        ConfigureTarget(transmittanceLut);
+    }
+
     public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
     {
         if (!TryInitResources()) return;
@@ -55,8 +66,6 @@ public class BeforeRenderSkyboxPass : ScriptableRenderPass
         shaderForTransmittanceLut.SetBuffer(kernelId, "_AtmosphereParamses", buffer);
         var rtWidth  = transmittanceLut.width;
         var rtHeight = transmittanceLut.height;
-        cmd.GetTemporaryRT(_TransmittanceLutTempRTId, rtWidth, rtHeight, 0, filter: FilterMode.Bilinear, format: RenderTextureFormat.ARGBFloat, readWrite: default, antiAliasing: 1, enableRandomWrite: true);
-        cmd.SetComputeTextureParam(shaderForTransmittanceLut, kernelId, "Result", _TransmittanceLutTempRTId);
         cmd.DispatchCompute(shaderForTransmittanceLut, kernelId, Mathf.CeilToInt(rtWidth / 8f), Mathf.CeilToInt(rtHeight / 8f), 1);
 
         context.ExecuteCommandBuffer(cmd);
@@ -64,14 +73,11 @@ public class BeforeRenderSkyboxPass : ScriptableRenderPass
         buffer.Release();
         cmd.Clear();
 
+        // 将临时的 RT Blit 到一张全局的 RT 上
         cmd.Blit(_TransmittanceLutTempRTId, transmittanceLut);
         cmd.ReleaseTemporaryRT(_TransmittanceLutTempRTId);
         context.ExecuteCommandBuffer(cmd);
         context.Submit();
-        cmd.Clear();
-        
-        cmd.SetRenderTarget(renderingData.cameraData.renderer.cameraColorTarget);
-        context.ExecuteCommandBuffer(cmd);
         cmd.Clear();
     }
 
