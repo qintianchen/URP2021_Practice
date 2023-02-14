@@ -16,8 +16,16 @@ MonoBehaviour:
   atmosphereParams:
     planetRadius: 6360000
     atmosphereHeight: 60000
+    rayleighScattering_h0: {x: 0, y: 0, z: 0}
     rayleighHeight: 8000
+    mieScattering_h0: {x: 0, y: 0, z: 0}
     mieHeight: 1200
     mieAnisotropy: 0.8
+    mieAbsorption: {x: 0, y: 0, z: 0}
+    ozoneAbsorption: {x: 0, y: 0, z: 0}
     ozoneCenter: 25000
     ozoneWidth: 15000
+  rayleighScatteringScale: 2.75
+  mieScatteringScale: 1.59
+  mieAbsorptionScale: 1
+  ozoneAbsorptionScale: 1

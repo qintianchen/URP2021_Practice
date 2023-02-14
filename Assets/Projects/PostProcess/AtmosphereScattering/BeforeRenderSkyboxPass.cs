@@ -46,10 +46,10 @@ public class BeforeRenderSkyboxPass : ScriptableRenderPass
         var buffer   = new ComputeBuffer(1, Marshal.SizeOf<AtmosphereRenderSettings.AtmosphereParams>());
 
         var atmosphereParams = atmosphereRenderSettings.atmosphereParams;
-        atmosphereParams.rayleighScattering_h0 = new Vector3(5.802f, 13.558f, 33.1f) * 1E-6f;
-        atmosphereParams.mieScattering_h0 = Vector3.one * 3.996f * 1E-6f;
-        atmosphereParams.mieAbsorption = Vector3.one * 4.4f * 1E-6f;
-        atmosphereParams.ozoneAbsorption = new Vector3(0.650f, 1.881f, 0.085f) * 1E-6f;
+        atmosphereParams.rayleighScattering_h0 = new Vector3(5.802f, 13.558f, 33.1f) * 1E-6f * atmosphereRenderSettings.rayleighScatteringScale;
+        atmosphereParams.mieScattering_h0 = Vector3.one * 3.996f * 1E-6f * atmosphereRenderSettings.mieScatteringScale;
+        atmosphereParams.mieAbsorption = Vector3.one * 4.4f * 1E-6f * atmosphereRenderSettings.mieAbsorptionScale;
+        atmosphereParams.ozoneAbsorption = new Vector3(0.650f, 1.881f, 0.085f) * 1E-6f * atmosphereRenderSettings.ozoneAbsorptionScale;
         
         buffer.SetData(new[] { atmosphereParams });
         shaderForTransmittanceLut.SetBuffer(kernelId, "_AtmosphereParamses", buffer);

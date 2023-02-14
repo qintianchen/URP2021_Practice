@@ -6,6 +6,11 @@ public class AtmosphereRenderSettings : ScriptableObject
     public bool             updateTransmittanceLutThisFrame;
     public AtmosphereParams atmosphereParams;
 
+    public float rayleighScatteringScale;
+    public float mieScatteringScale;
+    public float mieAbsorptionScale;
+    public float ozoneAbsorptionScale;
+
     [System.Serializable]
     public struct AtmosphereParams
     {
