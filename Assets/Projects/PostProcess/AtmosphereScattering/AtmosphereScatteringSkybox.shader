@@ -89,7 +89,8 @@ Shader "Custom/PostProcessing/AtmosphereScatteringSkybox"
                 float3 viewDirWS = ScreenQuadUVtoViewDirWS(screenQuadUV, _FOV, _Aspect);
                 viewDirWS = normalize(viewDirWS);
 
-                float3 viewPositionWS = float3(0, 10, 0);
+                float3 cameraPositionWS = _WorldSpaceCameraPos;
+                float3 viewPositionWS = float3(0, cameraPositionWS.y, 0);
 
                 AtmosphereParams atmosphereParams = _AtmosphereParamses[0];
                 Light mainLight = GetMainLight();
@@ -116,14 +117,13 @@ Shader "Custom/PostProcessing/AtmosphereScatteringSkybox"
                     float cos_theta1 = dot(mainLightDirection, centerToCurPoint_normalized);
                     float3 t1 = GetTransmittanceFromLut(atmosphereParams, height, cos_theta1, _TransmittanceLut);
                     
-                    float3 t20 = GetTransmittanceFromLut(atmosphereParams, 10, viewDotUp, _TransmittanceLut);
+                    float3 t20 = GetTransmittanceFromLut(atmosphereParams, viewPositionWS.y, viewDotUp, _TransmittanceLut);
                     float3 t21 = GetTransmittanceFromLut(atmosphereParams, height, dot(viewDirWS, centerToCurPoint_normalized), _TransmittanceLut);
                     float3 t2 = t20 / t21;
 
                     float3 s = GetRayleighScattering(atmosphereParams, viewDotLight, height) + GetMieScattering(atmosphereParams, viewDotLight, height);
 
-                    finalColor += mainLight.color * 0.03 * t1 * t2; // * (s * stepLength);
-                    // totalAttenuationFromScattering += s * t1 * t2;
+                    finalColor += mainLight.color * 10 * t1 * t2 * (s * stepLength);
                 }
 
                 if(viewDotLight > 0.9999f)

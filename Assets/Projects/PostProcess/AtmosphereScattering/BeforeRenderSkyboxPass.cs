@@ -46,16 +46,22 @@ public class BeforeRenderSkyboxPass : ScriptableRenderPass
         var buffer   = new ComputeBuffer(1, Marshal.SizeOf<AtmosphereRenderSettings.AtmosphereParams>());
 
         var atmosphereParams = atmosphereRenderSettings.atmosphereParams;
+        atmosphereParams.rayleighScattering_h0 = new Vector3(5.802f, 13.558f, 33.1f) * 1E-6f;
+        atmosphereParams.mieScattering_h0 = Vector3.one * 3.996f * 1E-6f;
+        atmosphereParams.mieAbsorption = Vector3.one * 4.4f * 1E-6f;
+        atmosphereParams.ozoneAbsorption = new Vector3(0.650f, 1.881f, 0.085f) * 1E-6f;
+        
         buffer.SetData(new[] { atmosphereParams });
         shaderForTransmittanceLut.SetBuffer(kernelId, "_AtmosphereParamses", buffer);
         var rtWidth  = transmittanceLut.width;
         var rtHeight = transmittanceLut.height;
-        cmd.GetTemporaryRT(_TransmittanceLutTempRTId, rtWidth, rtHeight, 0, filter: default, format: default, readWrite: default, antiAliasing: 1, enableRandomWrite: true);
+        cmd.GetTemporaryRT(_TransmittanceLutTempRTId, rtWidth, rtHeight, 0, filter: FilterMode.Bilinear, format: RenderTextureFormat.ARGBFloat, readWrite: default, antiAliasing: 1, enableRandomWrite: true);
         cmd.SetComputeTextureParam(shaderForTransmittanceLut, kernelId, "Result", _TransmittanceLutTempRTId);
         cmd.DispatchCompute(shaderForTransmittanceLut, kernelId, Mathf.CeilToInt(rtWidth / 8f), Mathf.CeilToInt(rtHeight / 8f), 1);
 
         context.ExecuteCommandBuffer(cmd);
         context.Submit();
+        buffer.Release();
         cmd.Clear();
 
         cmd.Blit(_TransmittanceLutTempRTId, transmittanceLut);

@@ -14,14 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   updateTransmittanceLutThisFrame: 1
   atmosphereParams:
-    planetRadius: 6400000
+    planetRadius: 6360000
     atmosphereHeight: 60000
-    rayleighScattering_h0: {x: 0.000005802, y: 0.000013558, z: 0.0000331}
     rayleighHeight: 8000
-    mieScattering_h0: {x: 0.000003996, y: 0.000003996, z: 0.000003996}
     mieHeight: 1200
     mieAnisotropy: 0.8
-    mieAbsorption: {x: 0.0000044, y: 0.0000044, z: 0.0000044}
-    ozoneAbsorption: {x: 0.00000065, y: 0.000001881, z: 0.000000085}
     ozoneCenter: 25000
     ozoneWidth: 15000
