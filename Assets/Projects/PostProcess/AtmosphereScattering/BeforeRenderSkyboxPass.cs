@@ -13,6 +13,8 @@ public class BeforeRenderSkyboxPass : ScriptableRenderPass
     private static int _TransmittanceLutTempRTId = Shader.PropertyToID("_TransmittanceLutTempRT");
     private static int _TransmittanceLutId       = Shader.PropertyToID("_TransmittanceLut");
 
+    private static RenderTargetIdentifier rtID;
+
     private AtmosphereRenderSettings atmosphereRenderSettings;
     private ComputeShader            shaderForTransmittanceLut;
     private RenderTexture            transmittanceLut;

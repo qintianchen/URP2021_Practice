@@ -15,6 +15,10 @@ Shader "Custom/PostProcessing/AtmosphereScatteringSkybox"
         Pass
         {
             HLSLPROGRAM
+            
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            
             #pragma vertex Vert
             #pragma fragment Frag
 
@@ -117,20 +121,25 @@ Shader "Custom/PostProcessing/AtmosphereScatteringSkybox"
                 for (int i = 0; i < sampleCount; i++)
                 {
                     float curDistance = stepLength * (i + 0.5);
+                    float3 curPositionWS = viewPositionWS + viewDirWS * curDistance;
+                    float4 shadowCoord = TransformWorldToShadowCoord(curPositionWS);
+                    float shadow = MainLightRealtimeShadow(shadowCoord);
+                    if(shadow > 0.99)
+                    {
+                        float height = length(float3(0, atmosphereParams.planetRadius, 0) + curDistance * viewDirWS) - atmosphereParams.planetRadius; // 海拔高度
+                        float3 centerToCurPoint = float3(0, atmosphereParams.planetRadius, 0) + viewDirWS * curDistance; // 从地心指向当前考察点的向量
+                        float3 centerToCurPoint_normalized = normalize(centerToCurPoint);
+                        float cos_theta1 = dot(mainLightDirection, centerToCurPoint_normalized);
+                        float3 t1 = GetTransmittanceFromLut(atmosphereParams, height, cos_theta1, _TransmittanceLut);
+                        
+                        float3 t20 = GetTransmittanceFromLut(atmosphereParams, viewPositionWS.y, viewDotUp, _TransmittanceLut);
+                        float3 t21 = GetTransmittanceFromLut(atmosphereParams, height, dot(viewDirWS, centerToCurPoint_normalized), _TransmittanceLut);
+                        float3 t2 = t20 / t21;
 
-                    float height = length(float3(0, atmosphereParams.planetRadius, 0) + curDistance * viewDirWS) - atmosphereParams.planetRadius; // 海拔高度
-                    float3 centerToCurPoint = float3(0, atmosphereParams.planetRadius, 0) + viewDirWS * curDistance; // 从地心指向当前考察点的向量
-                    float3 centerToCurPoint_normalized = normalize(centerToCurPoint);
-                    float cos_theta1 = dot(mainLightDirection, centerToCurPoint_normalized);
-                    float3 t1 = GetTransmittanceFromLut(atmosphereParams, height, cos_theta1, _TransmittanceLut);
-                    
-                    float3 t20 = GetTransmittanceFromLut(atmosphereParams, viewPositionWS.y, viewDotUp, _TransmittanceLut);
-                    float3 t21 = GetTransmittanceFromLut(atmosphereParams, height, dot(viewDirWS, centerToCurPoint_normalized), _TransmittanceLut);
-                    float3 t2 = t20 / t21;
+                        float3 s = GetRayleighScattering(atmosphereParams, viewDotLight, height) + GetMieScattering(atmosphereParams, viewDotLight, height);
 
-                    float3 s = GetRayleighScattering(atmosphereParams, viewDotLight, height) + GetMieScattering(atmosphereParams, viewDotLight, height);
-
-                    finalColor += mainLight.color * 32 * t1 * t2 * (s * stepLength);
+                        finalColor += mainLight.color * 32 * t1 * t2 * (s * stepLength);
+                    }
                 }
 
                 if(viewDotLight > 0.9999f)
