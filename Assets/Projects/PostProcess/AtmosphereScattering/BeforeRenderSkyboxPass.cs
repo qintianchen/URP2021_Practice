@@ -18,6 +18,7 @@ public class BeforeRenderSkyboxPass : ScriptableRenderPass
     private AtmosphereRenderSettings atmosphereRenderSettings;
     private ComputeShader            shaderForTransmittanceLut;
     private RenderTexture            transmittanceLut;
+    private ComputeBuffer            buffer;
 
     public void Setup(AtmosphereRenderSettings atmosphereRenderSettings, ComputeShader shaderForTransmittanceLut, RenderTexture transmittanceLut)
     {
@@ -33,54 +34,73 @@ public class BeforeRenderSkyboxPass : ScriptableRenderPass
         var rtHeight = transmittanceLut.height;
         cmd.GetTemporaryRT(_TransmittanceLutTempRTId, rtWidth, rtHeight, 0, filter: FilterMode.Bilinear, format: RenderTextureFormat.ARGBFloat, readWrite: default, antiAliasing: 1, enableRandomWrite: true);
         cmd.SetComputeTextureParam(shaderForTransmittanceLut, kernelId, "Result", _TransmittanceLutTempRTId);
-
+        buffer = new ComputeBuffer(1, Marshal.SizeOf<AtmosphereRenderSettings.AtmosphereParams>());
+        
         ConfigureTarget(transmittanceLut);
+    }
+
+    public override void OnCameraCleanup(CommandBuffer cmd)
+    {
+        buffer.Release();
+        cmd.ReleaseTemporaryRT(_TransmittanceLutTempRTId);
     }
 
     public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
     {
         if (!TryInitResources()) return;
 
-        var cmd = CommandBufferPool.Get(k_RenderTag);
-
-        if (atmosphereRenderSettings != null && atmosphereRenderSettings.updateTransmittanceLutThisFrame)
+        var cmd = CommandBufferPool.Get();
+        using (new ProfilingScope(cmd, new ProfilingSampler("BeforeRenderSkyboxPass")))
         {
-            UpdateTransmittanceLut(context, cmd, ref renderingData);
+            if (atmosphereRenderSettings != null && atmosphereRenderSettings.updateTransmittanceLutThisFrame)
+            {
+                using (new ProfilingScope(cmd, new ProfilingSampler("ComputeTransmittanceLut")))
+                {
+                    UpdateTransmittanceLut(context, cmd, ref renderingData);
+                }
+
+                using (new ProfilingScope(cmd, new ProfilingSampler("Blit")))
+                {
+                    cmd.Blit(_TransmittanceLutTempRTId, transmittanceLut);
+                }
+            }
+
+            using (new ProfilingScope(cmd, new ProfilingSampler("SetProperties")))
+            {
+                BeforeRenderSkyboxInNative(context, ref renderingData, cmd); 
+            }
         }
 
-        BeforeRenderSkyboxInNative(context, ref renderingData, cmd);
-
+        context.ExecuteCommandBuffer(cmd);
         CommandBufferPool.Release(cmd);
     }
 
     private void UpdateTransmittanceLut(ScriptableRenderContext context, CommandBuffer cmd, ref RenderingData renderingData)
     {
         var kernelId = shaderForTransmittanceLut.FindKernel("CSMain");
-        var buffer   = new ComputeBuffer(1, Marshal.SizeOf<AtmosphereRenderSettings.AtmosphereParams>());
 
         var atmosphereParams = atmosphereRenderSettings.atmosphereParams;
         atmosphereParams.rayleighScattering_h0 = new Vector3(5.802f, 13.558f, 33.1f) * 1E-6f * atmosphereRenderSettings.rayleighScatteringScale;
         atmosphereParams.mieScattering_h0 = Vector3.one * 3.996f * 1E-6f * atmosphereRenderSettings.mieScatteringScale;
         atmosphereParams.mieAbsorption = Vector3.one * 4.4f * 1E-6f * atmosphereRenderSettings.mieAbsorptionScale;
         atmosphereParams.ozoneAbsorption = new Vector3(0.650f, 1.881f, 0.085f) * 1E-6f * atmosphereRenderSettings.ozoneAbsorptionScale;
+
+        cmd.SetBufferData(buffer, new[] { atmosphereParams });
+        cmd.SetComputeBufferParam(shaderForTransmittanceLut, kernelId, "_AtmosphereParamses", buffer);
+
+        // buffer.SetData(new[]{atmosphereParams});
+        // shaderForTransmittanceLut.SetBuffer( kernelId, "_AtmosphereParamses", buffer);
         
-        buffer.SetData(new[] { atmosphereParams });
-        shaderForTransmittanceLut.SetBuffer(kernelId, "_AtmosphereParamses", buffer);
         var rtWidth  = transmittanceLut.width;
         var rtHeight = transmittanceLut.height;
         cmd.DispatchCompute(shaderForTransmittanceLut, kernelId, Mathf.CeilToInt(rtWidth / 8f), Mathf.CeilToInt(rtHeight / 8f), 1);
-
-        context.ExecuteCommandBuffer(cmd);
-        context.Submit();
-        buffer.Release();
-        cmd.Clear();
-
+        // shaderForTransmittanceLut.Dispatch(kernelId, Mathf.CeilToInt(rtWidth / 8f), Mathf.CeilToInt(rtHeight / 8f), 1);
+        
+        // context.ExecuteCommandBuffer(cmd);
+        // cmd.Clear();
+        
         // 将临时的 RT Blit 到一张全局的 RT 上
-        cmd.Blit(_TransmittanceLutTempRTId, transmittanceLut);
-        cmd.ReleaseTemporaryRT(_TransmittanceLutTempRTId);
-        context.ExecuteCommandBuffer(cmd);
-        context.Submit();
-        cmd.Clear();
+        // cmd.Blit(_TransmittanceLutTempRTId, transmittanceLut);
     }
 
     /// <summary>
@@ -118,9 +138,9 @@ public class BeforeRenderSkyboxPass : ScriptableRenderPass
         cmd.SetGlobalFloat(_FOVId, fov);
         cmd.SetGlobalFloat(_AspectId, aspect);
 
-        context.ExecuteCommandBuffer(cmd);
-        context.Submit();
-        cmd.Clear();
+        // context.ExecuteCommandBuffer(cmd);
+        // context.Submit();
+        // cmd.Clear();
     }
 
     private bool TryInitResources()

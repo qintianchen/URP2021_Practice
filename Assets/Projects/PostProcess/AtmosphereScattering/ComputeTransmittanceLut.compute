@@ -25,4 +25,5 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     float cos_theta = uv.x * (1 - minCosTheta) + minCosTheta; // 对应 [minCosTheta, 1] 
 
     Result[id.xy] = float4(GetTransmittance(params, height, cos_theta), 1);
+    // Result[id.xy] = params.mieAnisotropy;
 }
