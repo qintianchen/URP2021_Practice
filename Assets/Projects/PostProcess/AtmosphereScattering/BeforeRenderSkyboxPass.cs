@@ -5,7 +5,7 @@ using UnityEngine.Rendering.Universal;
 
 public class BeforeRenderSkyboxPass : ScriptableRenderPass
 {
-    private static string k_RenderTag = "BeforeRenderSkybox";
+    // private static string k_RenderTag = "BeforeRenderSkybox";
 
     private static int _FOVId                    = Shader.PropertyToID("_FOV");
     private static int _AspectId                 = Shader.PropertyToID("_Aspect");

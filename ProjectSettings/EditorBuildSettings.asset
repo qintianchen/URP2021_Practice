@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Projects/PostProcess/AtmosphereScattering/AtmosphereScattering.unity
-    guid: ce460aebc7a18674b87c5be37b1e6eec
+    path: Assets/Projects/Testing/TestCommandBuffer/TestCommandBuffer.unity
+    guid: 2c01ebd59b6e0684eb19d62d3c8c79ad
   m_configObjects: {}

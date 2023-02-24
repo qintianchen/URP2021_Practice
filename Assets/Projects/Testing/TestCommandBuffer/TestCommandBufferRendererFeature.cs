@@ -19,7 +19,8 @@ public class TestCommandBufferRendererFeature : ScriptableRendererFeature
         
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
-            buffer = new ComputeBuffer(3, Marshal.SizeOf<float>());
+            buffer = new ComputeBuffer(3, sizeof(float));
+            buffer.SetData(new[]{0.5f, 0.4f, 0.6f});
             cmd.GetTemporaryRT(resultID, 256, 256, 0);
         }
 
@@ -36,14 +37,15 @@ public class TestCommandBufferRendererFeature : ScriptableRendererFeature
 
             using (new ProfilingScope(cmd, new ProfilingSampler("DispatchCompute")))
             {
-                cmd.SetBufferData(buffer, new[]{0.3f, 0.4f, 0.6f});
-                cmd.SetComputeBufferParam(computeShader, kernelIndex, "bbs", buffer);
+                // cmd.SetBufferData(buffer, new[]{0.3f, 0.4f, 0.6f});
+                cmd.SetComputeBufferParam(computeShader, kernelIndex, Shader.PropertyToID("bbs"), buffer);
                 
                 cmd.DispatchCompute(computeShader, kernelIndex, Mathf.CeilToInt(256 / 8f), Mathf.CeilToInt(256 / 8f), 1);
             }
 
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
+            CommandBufferPool.Release(cmd);
         }
 
         public override void OnCameraCleanup(CommandBuffer cmd)
