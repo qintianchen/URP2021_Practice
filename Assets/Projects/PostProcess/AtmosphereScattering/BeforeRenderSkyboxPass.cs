@@ -85,16 +85,16 @@ public class BeforeRenderSkyboxPass : ScriptableRenderPass
         atmosphereParams.mieAbsorption = Vector3.one * 4.4f * 1E-6f * atmosphereRenderSettings.mieAbsorptionScale;
         atmosphereParams.ozoneAbsorption = new Vector3(0.650f, 1.881f, 0.085f) * 1E-6f * atmosphereRenderSettings.ozoneAbsorptionScale;
 
-        cmd.SetBufferData(buffer, new[] { atmosphereParams });
-        cmd.SetComputeBufferParam(shaderForTransmittanceLut, kernelId, "_AtmosphereParamses", buffer);
+        // cmd.SetBufferData(buffer, new[] { atmosphereParams });
+        // cmd.SetComputeBufferParam(shaderForTransmittanceLut, kernelId, "_AtmosphereParamses", buffer);
 
-        // buffer.SetData(new[]{atmosphereParams});
-        // shaderForTransmittanceLut.SetBuffer( kernelId, "_AtmosphereParamses", buffer);
+        buffer.SetData(new[]{atmosphereParams});
+        shaderForTransmittanceLut.SetBuffer( kernelId, "_AtmosphereParamses", buffer);
         
         var rtWidth  = transmittanceLut.width;
         var rtHeight = transmittanceLut.height;
-        cmd.DispatchCompute(shaderForTransmittanceLut, kernelId, Mathf.CeilToInt(rtWidth / 8f), Mathf.CeilToInt(rtHeight / 8f), 1);
-        // shaderForTransmittanceLut.Dispatch(kernelId, Mathf.CeilToInt(rtWidth / 8f), Mathf.CeilToInt(rtHeight / 8f), 1);
+        // cmd.DispatchCompute(shaderForTransmittanceLut, kernelId, Mathf.CeilToInt(rtWidth / 8f), Mathf.CeilToInt(rtHeight / 8f), 1);
+        shaderForTransmittanceLut.Dispatch(kernelId, Mathf.CeilToInt(rtWidth / 8f), Mathf.CeilToInt(rtHeight / 8f), 1);
         
         // context.ExecuteCommandBuffer(cmd);
         // cmd.Clear();
