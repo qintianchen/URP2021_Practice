@@ -4,13 +4,14 @@ using UnityEngine.Rendering.Universal;
 
 public class AtmosphereScatteringRendererFeature : ScriptableRendererFeature
 {
-    public Material skyViewLutMat; 
+    public Material                 skyViewLutMat;
+    public AtmosphereRenderSettings atmosphereRenderSettings;
     
     private SkyViewLutPass skyViewLutPass;
 
     public override void Create()
     {
-        skyViewLutPass = new SkyViewLutPass(skyViewLutMat);
+        skyViewLutPass = new SkyViewLutPass(skyViewLutMat, atmosphereRenderSettings);
         skyViewLutPass.renderPassEvent = RenderPassEvent.BeforeRendering;
     }
 
@@ -23,28 +24,38 @@ public class AtmosphereScatteringRendererFeature : ScriptableRendererFeature
     {
         private static string k_RenderTag = "SkyViewLutPass";
         
-        private Material skyViewLutMat;
+        private Material                 skyViewLutMat;
+        private AtmosphereRenderSettings atmosphereRenderSettings;
 
         private static int _SkyViewLutId = Shader.PropertyToID("_SkyViewLut");
 
-        public SkyViewLutPass(Material skyViewLutMat)
+        public SkyViewLutPass(Material skyViewLutMat, AtmosphereRenderSettings atmosphereRenderSettings)
         {
             this.skyViewLutMat = skyViewLutMat;
+            this.atmosphereRenderSettings = atmosphereRenderSettings;
             
             if (skyViewLutMat == null)
             {
                 Debug.LogError($"Material SkyViewLutMat is null.");
             }
+
+            if (atmosphereRenderSettings == null)
+            {
+                Debug.LogError($"AtmosphereRenderSettings is null.");
+            }
         }
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            if (skyViewLutMat == null)
+            if (skyViewLutMat == null || atmosphereRenderSettings == null)
             {
                 return;
             }
 
             var cmd = CommandBufferPool.Get(k_RenderTag);
+            
+            // cmd.SetGlobalBuffer("_AtmosphereScatteringParamses", );
+            
             cmd.Blit(null, _SkyViewLutId, skyViewLutMat);
             
             context.ExecuteCommandBuffer(cmd);
