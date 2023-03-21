@@ -4,14 +4,13 @@ using UnityEngine.Rendering.Universal;
 
 public class AtmosphereScatteringRendererFeature : ScriptableRendererFeature
 {
-    public Material                 skyViewLutMat;
     public AtmosphereRenderSettings atmosphereRenderSettings;
     
     private SkyViewLutPass skyViewLutPass;
 
     public override void Create()
     {
-        skyViewLutPass = new SkyViewLutPass(skyViewLutMat, atmosphereRenderSettings);
+        skyViewLutPass = new SkyViewLutPass();
         skyViewLutPass.renderPassEvent = RenderPassEvent.BeforeRendering;
     }
 
@@ -29,11 +28,10 @@ public class AtmosphereScatteringRendererFeature : ScriptableRendererFeature
 
         private static int _SkyViewLutId = Shader.PropertyToID("_SkyViewLut");
 
-        public SkyViewLutPass(Material skyViewLutMat, AtmosphereRenderSettings atmosphereRenderSettings)
+        public SkyViewLutPass()
         {
-            this.skyViewLutMat = skyViewLutMat;
-            this.atmosphereRenderSettings = atmosphereRenderSettings;
-            
+            var skyViewLutShader = Shader.Find("CasualAtmosphere/SkyViewLut");
+            skyViewLutMat = CoreUtils.CreateEngineMaterial(skyViewLutShader);
             if (skyViewLutMat == null)
             {
                 Debug.LogError($"Material SkyViewLutMat is null.");
@@ -53,8 +51,6 @@ public class AtmosphereScatteringRendererFeature : ScriptableRendererFeature
             }
 
             var cmd = CommandBufferPool.Get(k_RenderTag);
-            
-            // cmd.SetGlobalBuffer("_AtmosphereScatteringParamses", );
             
             cmd.Blit(null, _SkyViewLutId, skyViewLutMat);
             

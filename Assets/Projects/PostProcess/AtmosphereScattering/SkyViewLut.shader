@@ -1,47 +1,72 @@
-Shader "AtmosphereScattering/SkyViewLut"
+Shader "CasualAtmosphere/SkyViewLut"
 {
     Properties
     {
+
     }
     SubShader
     {
-        Tags
-        {
-        }
-        LOD 100
+        Cull Off ZWrite Off ZTest Always
 
         Pass
         {
+            Name "SkyViewLut"
+            
             HLSLPROGRAM
-            #pragma vertex Vert
-            #pragma fragment Frag
+            #pragma vertex vert
+            #pragma fragment frag
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Helper.hlsl"
+            #include "Scattering.hlsl"
+            #include "AtmosphereParameter.hlsl"
+            #include "Raymarching.hlsl"
 
-            struct Attributes
+            struct appdata
             {
-                float4 positionOS : POSITION;
+                float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
             };
 
-            struct Varyings
+            struct v2f
             {
-                float4 positionCS : SV_POSITION;
-                float2 uv: TEXCOORD0;
+                float2 uv : TEXCOORD0;
+                float4 vertex : SV_POSITION;
             };
 
-            
-            Varyings Vert(Attributes input)
+            v2f vert (appdata v)
             {
-                Varyings output;
-                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
-                output.uv = input.uv;
-                return output;
+                v2f o;
+                o.vertex = TransformObjectToHClip(v.vertex);
+                o.uv = v.uv;
+                return o;
             }
 
-            half4 Frag(Varyings input) : SV_Target
+            SAMPLER(sampler_LinearClamp);
+            Texture2D _transmittanceLut;
+            Texture2D _multiScatteringLut;
+
+            float4 frag (v2f i) : SV_Target
             {
-                return half4(input.uv, 0, 1);
+                AtmosphereParameter param = GetAtmosphereParameter();
+
+                float4 color = float4(0, 0, 0, 1);
+                float2 uv = i.uv;
+                float3 viewDir = UVToViewDir(uv);
+
+                Light mainLight = GetMainLight();
+                float3 lightDir = mainLight.direction;
+                
+                float h = _WorldSpaceCameraPos.y - param.SeaLevel + param.PlanetRadius;
+                float3 eyePos = float3(0, h, 0);
+
+                color.rgb = GetSkyView(
+                    param, eyePos, viewDir, lightDir, -1.0f,
+                    _transmittanceLut, _multiScatteringLut, sampler_LinearClamp
+                );
+
+                return color;
             }
             ENDHLSL
         }
